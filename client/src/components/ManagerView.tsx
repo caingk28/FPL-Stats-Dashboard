@@ -34,7 +34,7 @@ export default function ManagerView({ leagueId }: ManagerViewProps) {
             <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="transfers">Transfers</TabsTrigger>
           </TabsList>
-          <TabsContent value="history">
+          <TabsContent value="history" key="history">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {data?.history.map((week) => (
                 <Card key={week.event} className="bg-white/5">
@@ -49,13 +49,13 @@ export default function ManagerView({ leagueId }: ManagerViewProps) {
               ))}
             </div>
           </TabsContent>
-          <TabsContent value="transfers">
+          <TabsContent value="transfers" key="transfers">
             <div className="grid grid-cols-1 gap-4">
-              {data?.transfers.map((transfer) => (
-                <Card key={transfer.id} className="bg-white/5">
+              {data?.chips.map((chip) => (
+                <Card key={chip.id} className="bg-white/5">
                   <CardContent className="py-4">
-                    <p>{transfer.playerOut} → {transfer.playerIn}</p>
-                    <p className="text-sm text-gray-400">GW {transfer.event}</p>
+                    <p>{chip.playerOut} → {chip.playerIn}</p>
+                    <p className="text-sm text-gray-400">GW {chip.event}</p>
                   </CardContent>
                 </Card>
               ))}
