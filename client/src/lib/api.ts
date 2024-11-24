@@ -91,3 +91,24 @@ export async function fetchManagerHistory(leagueId: string): Promise<ManagerHist
   const response = await fetch(`${API_BASE}/manager-history/${leagueId}`);
   return handleApiResponse<ManagerHistoryResponse>(response, 'Failed to fetch manager history');
 }
+export interface PlayerScore {
+  id: number;
+  name: string;
+  position: string;
+  team: string;
+  points: number;
+  price: number;
+  form: string;
+  selected_by: string;
+}
+
+export interface SquadResponse {
+  picks: PlayerScore[];
+  totalPoints: number;
+  bank: number;
+}
+
+export async function fetchSquad(managerId: string): Promise<SquadResponse> {
+  const response = await fetch(`${API_BASE}/squad/${managerId}`);
+  return handleApiResponse<SquadResponse>(response, 'Failed to fetch squad data');
+}

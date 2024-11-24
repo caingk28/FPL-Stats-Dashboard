@@ -15,6 +15,7 @@ import { LeagueStandingsResponse, StandingsEntry } from "../lib/api";
 
 interface StandingsTableProps {
   leagueId: string;
+  onSelectManager?: (managerId: string) => void;
 }
 
 export default function StandingsTable({ leagueId }: StandingsTableProps) {
@@ -77,7 +78,11 @@ export default function StandingsTable({ leagueId }: StandingsTableProps) {
         </TableHeader>
         <TableBody>
           {data.standings.results.map((entry) => (
-            <TableRow key={entry.entry}>
+            <TableRow 
+              key={entry.entry}
+              className="cursor-pointer hover:bg-white/5"
+              onClick={() => onSelectManager?.(entry.entry.toString())}
+            >
               <TableCell>{entry.rank}</TableCell>
               <TableCell>{entry.entry_name}</TableCell>
               <TableCell>{entry.player_name}</TableCell>

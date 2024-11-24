@@ -147,4 +147,63 @@ export function registerRoutes(app: Express) {
       res.status(400).json({ error: "Invalid manager ID or API error" });
     }
   });
+  // Squad data endpoint
+  app.get("/api/squad/:managerId", async (req, res) => {
+    try {
+      const { managerId } = paramsSchema.parse(req.params);
+      const [picksResponse, playersResponse] = await Promise.all([
+        fetch(`${FPL_API_BASE}/entry/${managerId}/event/1/picks/`),
+        fetch(`${FPL_API_BASE}/bootstrap-static/`)
+      ]);
+      
+      if (!picksResponse.ok || !playersResponse.ok) {
+        throw new Error('Failed to fetch from FPL API');
+      }
+
+      const [picksData, playersData] = await Promise.all([
+        picksResponse.json(),
+        playersResponse.json()
+      ]);
+
+      // Map player IDs to their full data
+      interface FPLPlayer {
+        id: number;
+        web_name: string;
+        element_type: number;
+        team: number;
+        event_points: number;
+        now_cost: number;
+        form: string;
+        selected_by_percent: string;
+      }
+
+      const playerMap = new Map(
+        playersData.elements.map((p: FPLPlayer) => [p.id, p])
+      );
+      const positions = ['GKP', 'DEF', 'MID', 'FWD'];
+      const teams = playersData.teams;
+
+      const picks = picksData.picks.map((pick: { element: number }) => {
+        const player = playerMap.get(pick.element) as FPLPlayer;
+        return {
+          id: player.id,
+          name: player.web_name,
+          position: positions[player.element_type - 1],
+          team: teams[player.team - 1].short_name,
+          points: player.event_points,
+          price: player.now_cost / 10,
+          form: player.form,
+          selected_by: player.selected_by_percent
+        };
+      });
+
+      res.json({
+        picks,
+        totalPoints: picksData.entry_history.points,
+        bank: picksData.entry_history.bank / 10
+      });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid manager ID or API error" });
+    }
+  });
 }

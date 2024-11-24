@@ -74,11 +74,11 @@ export default function ManagerView({ leagueId }: ManagerViewProps) {
           <TabsContent value="transfers" key="transfers">
             {data?.chips?.length ? (
               <div className="grid grid-cols-1 gap-4">
-                {data.chips.map((chip) => (
-                  <Card key={chip.id} className="bg-white/5">
+                {data.chips.map((chip, index) => (
+                  <Card key={`${chip.name}-${chip.event}-${index}`} className="bg-white/5">
                     <CardContent className="py-4">
-                      <p>{chip.playerOut} → {chip.playerIn}</p>
-                      <p className="text-sm text-gray-400">GW {chip.event}</p>
+                      <p>{chip.name}</p>
+                      <p className="text-sm text-gray-400">GW {chip.event} • {chip.time}</p>
                     </CardContent>
                   </Card>
                 ))}
