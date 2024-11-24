@@ -1,7 +1,32 @@
 import type { Express } from "express";
 import { z } from "zod";
 
-const leagueIdSchema = z.string().regex(/^\d+$/);
+interface LeagueStanding {
+  total: number;
+}
+
+interface TeamStatsResponse {
+  averagePoints: number;
+  highestScore: number;
+  totalTeams: number;
+}
+
+interface ManagerHistoryResponse {
+  history: Array<{
+    event: number;
+    points: number;
+    rank: number;
+  }>;
+  transfers: Array<{
+    id: number;
+    event: number;
+    playerIn: string;
+    playerOut: string;
+  }>;
+}
+const paramsSchema = z.object({
+  leagueId: z.string().regex(/^\d+$/),
+});
 
 export function registerRoutes(app: Express) {
   // Proxy route to handle FPL API CORS issues

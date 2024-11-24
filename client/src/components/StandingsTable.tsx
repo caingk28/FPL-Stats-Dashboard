@@ -10,12 +10,26 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface StandingsEntry {
+  entry: number;
+  entry_name: string;
+  player_name: string;
+  rank: number;
+  total: number;
+}
+
+interface LeagueStandingsData {
+  standings: {
+    results: StandingsEntry[];
+  };
+}
+
 interface StandingsTableProps {
   leagueId: string;
 }
 
 export default function StandingsTable({ leagueId }: StandingsTableProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<LeagueStandingsData>({
     queryKey: ["standings", leagueId],
     queryFn: () => fetchLeagueStandings(leagueId),
     refetchInterval: 60000, // Refresh every minute
@@ -44,7 +58,7 @@ export default function StandingsTable({ leagueId }: StandingsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data?.standings.map((entry) => (
+          {data?.standings.results.map((entry: StandingsEntry) => (
             <TableRow key={entry.entry}>
               <TableCell>{entry.rank}</TableCell>
               <TableCell>{entry.entry_name}</TableCell>
