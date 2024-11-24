@@ -11,19 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useToast } from "@/hooks/use-toast";
-interface StandingsEntry {
-  entry: number;
-  entry_name: string;
-  player_name: string;
-  rank: number;
-  total: number;
-}
-
-interface LeagueStandingsData {
-  standings: {
-    results: StandingsEntry[];
-  };
-}
+import { LeagueStandingsResponse, StandingsEntry } from "../lib/api";
 
 interface StandingsTableProps {
   leagueId: string;
@@ -31,7 +19,7 @@ interface StandingsTableProps {
 
 export default function StandingsTable({ leagueId }: StandingsTableProps) {
   const { toast } = useToast();
-  const { data, isLoading, error } = useQuery<LeagueStandingsData>({
+  const { data, isLoading, error } = useQuery<LeagueStandingsResponse>({
     queryKey: ["standings", leagueId],
     queryFn: () => fetchLeagueStandings(leagueId),
     refetchInterval: 60000, // Refresh every minute
@@ -43,38 +31,58 @@ export default function StandingsTable({ leagueId }: StandingsTableProps) {
       title: "Error",
       description: error instanceof Error ? error.message : "Failed to fetch standings",
     });
-    return <div>Failed to load standings</div>;
+    return (
+      <div className="p-4 text-red-400 bg-red-950/50 rounded-md">
+        Failed to load standings. Please try again later.
+      </div>
+    );
   }
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-full bg-white/20" />
-        <Skeleton className="h-8 w-full bg-white/20" />
-        <Skeleton className="h-8 w-full bg-white/20" />
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48 bg-white/20" />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full bg-white/20" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.standings?.results?.length) {
+    return (
+      <div className="p-4 text-yellow-400 bg-yellow-950/50 rounded-md">
+        No standings data available for this league.
       </div>
     );
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">League Standings</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">League Standings</h2>
+        <p className="text-sm text-white/60">{data.league.name}</p>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Rank</TableHead>
             <TableHead>Team</TableHead>
             <TableHead>Manager</TableHead>
-            <TableHead>Points</TableHead>
+            <TableHead className="text-right">Points</TableHead>
+            <TableHead className="text-right">GW</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data?.standings.results.map((entry: StandingsEntry) => (
+          {data.standings.results.map((entry) => (
             <TableRow key={entry.entry}>
               <TableCell>{entry.rank}</TableCell>
               <TableCell>{entry.entry_name}</TableCell>
               <TableCell>{entry.player_name}</TableCell>
-              <TableCell>{entry.total}</TableCell>
+              <TableCell className="text-right">{entry.total}</TableCell>
+              <TableCell className="text-right">{entry.event_total}</TableCell>
             </TableRow>
           ))}
         </TableBody>

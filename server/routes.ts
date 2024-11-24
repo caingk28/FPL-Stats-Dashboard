@@ -47,8 +47,23 @@ export function registerRoutes(app: Express) {
       }
 
       const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid league ID or API error" });
+    }
+  });
+
+  // Team stats endpoint
+  app.get("/api/team-stats/:leagueId", async (req, res) => {
+    try {
+      const { leagueId } = paramsSchema.parse(req.params);
+      const response = await fetch(`${FPL_API_BASE}/leagues-classic/${leagueId}/standings/`);
       
-      // Calculate stats
+      if (!response.ok) {
+        throw new Error('Failed to fetch from FPL API');
+      }
+
+      const data = await response.json();
       const standings = data.standings.results;
       const totalPoints = standings.reduce((sum: number, entry: any) => sum + entry.total, 0);
       const averagePoints = Math.round(totalPoints / standings.length);
