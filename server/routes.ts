@@ -17,7 +17,7 @@ interface ManagerHistoryResponse {
     points: number;
     rank: number;
   }>;
-  transfers: Array<{
+  chips?: Array<{
     id: number;
     event: number;
     playerIn: string;
