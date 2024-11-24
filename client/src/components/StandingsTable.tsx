@@ -18,7 +18,7 @@ interface StandingsTableProps {
   onSelectManager?: (managerId: string) => void;
 }
 
-export default function StandingsTable({ leagueId }: StandingsTableProps) {
+export default function StandingsTable({ leagueId, onSelectManager }: StandingsTableProps) {
   const { toast } = useToast();
   const { data, isLoading, error } = useQuery<LeagueStandingsResponse>({
     queryKey: ["standings", leagueId],
@@ -81,7 +81,7 @@ export default function StandingsTable({ leagueId }: StandingsTableProps) {
             <TableRow 
               key={entry.entry}
               className="cursor-pointer hover:bg-white/5"
-              onClick={() => onSelectManager?.(entry.entry.toString())}
+              onClick={() => onSelectManager && onSelectManager(entry.entry.toString())}
             >
               <TableCell>{entry.rank}</TableCell>
               <TableCell>{entry.entry_name}</TableCell>
