@@ -28,12 +28,19 @@ const paramsSchema = z.object({
   leagueId: z.string().regex(/^\d+$/),
 });
 
+import cors from 'cors';
+
+const FPL_API_BASE = "https://fantasy.premierleague.com/api";
+
 export function registerRoutes(app: Express) {
-  // Proxy route to handle FPL API CORS issues
-  app.get("/api/team-stats/:leagueId", async (req, res) => {
+  // Enable CORS for all routes
+  app.use(cors());
+
+  // Proxy route for league standings
+  app.get("/api/leagues/:leagueId/standings", async (req, res) => {
     try {
-      const { leagueId } = leagueIdSchema.parse(req.params);
-      const response = await fetch(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`);
+      const { leagueId } = paramsSchema.parse(req.params);
+      const response = await fetch(`${FPL_API_BASE}/leagues-classic/${leagueId}/standings/`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch from FPL API');
@@ -59,7 +66,7 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/manager-history/:leagueId", async (req, res) => {
     try {
-      const { leagueId } = leagueIdSchema.parse(req.params);
+      const { leagueId } = paramsSchema.parse(req.params);
       const response = await fetch(`https://fantasy.premierleague.com/api/entry/${leagueId}/history/`);
       
       if (!response.ok) {

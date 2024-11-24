@@ -1,9 +1,10 @@
-const FPL_API_BASE = "https://fantasy.premierleague.com/api";
+const API_BASE = "/api";
 
 export async function fetchLeagueStandings(leagueId: string) {
-  const response = await fetch(`${FPL_API_BASE}/leagues-classic/${leagueId}/standings/`);
+  const response = await fetch(`${API_BASE}/leagues/${leagueId}/standings`);
   if (!response.ok) {
-    throw new Error('Failed to fetch league standings');
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch league standings' }));
+    throw new Error(error.error || 'Failed to fetch league standings');
   }
   return response.json();
 }

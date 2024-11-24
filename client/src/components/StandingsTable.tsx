@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { useToast } from "@/hooks/use-toast";
 interface StandingsEntry {
   entry: number;
   entry_name: string;
@@ -29,11 +30,21 @@ interface StandingsTableProps {
 }
 
 export default function StandingsTable({ leagueId }: StandingsTableProps) {
-  const { data, isLoading } = useQuery<LeagueStandingsData>({
+  const { toast } = useToast();
+  const { data, isLoading, error } = useQuery<LeagueStandingsData>({
     queryKey: ["standings", leagueId],
     queryFn: () => fetchLeagueStandings(leagueId),
     refetchInterval: 60000, // Refresh every minute
   });
+
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to fetch standings",
+    });
+    return <div>Failed to load standings</div>;
+  }
 
   if (isLoading) {
     return (
