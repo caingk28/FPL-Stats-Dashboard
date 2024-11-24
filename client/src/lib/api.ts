@@ -28,6 +28,10 @@ export interface TeamStatsResponse {
   averagePoints: number;
   highestScore: number;
   totalTeams: number;
+  totalTransfers: number;
+  bestGameweekScore: number;
+  overallRank: number;
+  teamValue: number;
 }
 
 export interface ManagerHistoryEntry {
@@ -47,10 +51,21 @@ export interface ManagerHistoryEntry {
 export interface ManagerHistoryResponse {
   history: ManagerHistoryEntry[];
   chips: Array<{
+    name: string;
+    event: number;
+    time: string;
+  }>;
+  transfers: Array<{
     id: number;
     event: number;
     playerIn: string;
     playerOut: string;
+    pointsImpact: number;
+  }>;
+  captains: Array<{
+    event: number;
+    playerName: string;
+    points: number;
   }>;
 }
 
