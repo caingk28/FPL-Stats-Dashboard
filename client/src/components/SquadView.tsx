@@ -1,10 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchSquad, type PlayerScore } from "../lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { fetchSquad } from "../lib/api";
+import styles from "./SquadView.module.css";
+import { User2 } from "lucide-react";
 
 interface SquadViewProps {
   managerId: string;
+}
+
+interface FormationPlayer {
+  id: number;
+  name: string;
+  position: string;
+  points: number;
+  isPlayed: boolean;
 }
 
 export default function SquadView({ managerId }: SquadViewProps) {
@@ -16,56 +24,78 @@ export default function SquadView({ managerId }: SquadViewProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48 bg-white/20" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Array.from({ length: 11 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 bg-white/20" />
-          ))}
-        </div>
+      <div className="animate-pulse space-y-4">
+        <div className="h-16 bg-white/20 rounded-lg" />
+        <div className="h-[600px] bg-white/20 rounded-lg" />
       </div>
     );
   }
 
-  const positionOrder = ["GKP", "DEF", "MID", "FWD"];
-  const sortedPlayers = [...(data?.picks || [])].sort(
-    (a, b) => positionOrder.indexOf(a.position) - positionOrder.indexOf(b.position)
+  if (!data?.picks) return null;
+
+  const formation = {
+    GKP: data.picks.filter(p => p.position === "GKP").slice(0, 1),
+    DEF: data.picks.filter(p => p.position === "DEF").slice(0, 3),
+    MID: data.picks.filter(p => p.position === "MID").slice(0, 4),
+    FWD: data.picks.filter(p => p.position === "FWD").slice(0, 3),
+  };
+
+  const PlayerCard = ({ player }: { player: FormationPlayer }) => (
+    <div className={styles.playerCard}>
+      <div className={styles.playerImage}>
+        <User2 size={32} className="text-gray-400" />
+      </div>
+      <div className={styles.playerName}>{player.name}</div>
+      <div className={styles.playerStatus}>
+        {player.points > 0 ? (
+          <span className="text-green-400">{player.points} pts</span>
+        ) : (
+          <span className="text-yellow-400">Still to play</span>
+        )}
+      </div>
+    </div>
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className={styles.header}>
         <h2 className="text-xl font-bold">Current Squad</h2>
-        <div className="text-sm text-white/60">
-          <span>Bank: £{data?.bank.toFixed(1)}m</span>
-          <span className="mx-2">•</span>
-          <span>Total Points: {data?.totalPoints}</span>
+        <div className={styles.scoreInfo}>
+          <div className={styles.scoreItem}>
+            <div className={styles.scoreLabel}>GW Score</div>
+            <div className={styles.scoreValue}>{data.totalPoints}</div>
+          </div>
+          <div className={styles.scoreItem}>
+            <div className={styles.scoreLabel}>Bank</div>
+            <div className={styles.scoreValue}>£{data.bank.toFixed(1)}m</div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {sortedPlayers.map((player) => (
-          <Card key={player.id} className="bg-white/5">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span>{player.name}</span>
-                <span className="text-white/60">{player.position}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Team: {player.team}</div>
-                <div>Price: £{player.price}m</div>
-                <div>Form: {player.form}</div>
-                <div>Selected: {player.selected_by}%</div>
-                <div className="col-span-2 mt-2">
-                  <span className="text-lg font-bold">{player.points}</span>
-                  <span className="text-white/60 ml-1">points</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className={styles.pitchContainer}>
+        <div className={styles.pitchLines} />
+        <div className={styles.formation}>
+          <div className={styles.row}>
+            {formation.GKP.map(player => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+          <div className={styles.row}>
+            {formation.DEF.map(player => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+          <div className={styles.row}>
+            {formation.MID.map(player => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+          <div className={styles.row}>
+            {formation.FWD.map(player => (
+              <PlayerCard key={player.id} player={player} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

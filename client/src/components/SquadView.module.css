@@ -1,0 +1,95 @@
+.pitchContainer {
+  background: linear-gradient(to bottom,
+    #2a8d2a 0%,
+    #1e661e 50%,
+    #2a8d2a 100%
+  );
+  border: 2px solid #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  position: relative;
+  min-height: 600px;
+  margin-bottom: 2rem;
+}
+
+.pitchLines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.formation {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 2rem;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.row {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.playerCard {
+  text-align: center;
+  padding: 0.5rem;
+  width: 120px;
+}
+
+.playerImage {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff;
+  margin: 0 auto 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.playerName {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.playerStatus {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+}
+
+.scoreInfo {
+  display: flex;
+  gap: 1rem;
+}
+
+.scoreItem {
+  text-align: center;
+}
+
+.scoreLabel {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.scoreValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
