@@ -1,0 +1,123 @@
+ ERROR(TypeScript)  Cannot find name 'PlayerScore'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:10:35
+
+     8 | }
+     9 |
+  > 10 | interface FormationPlayer extends PlayerScore {
+       |                                   ^^^^^^^^^^^
+    11 |   isCaptain: boolean;
+    12 | }
+    13 |
+
+ ERROR(TypeScript)  Property 'name' does not exist on type 'FormationPlayer'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:45:17
+
+    43 |       </div>
+    44 |       <div className={styles.playerName}>
+  > 45 |         {player.name}
+       |                 ^^^^
+    46 |         {player.isCaptain && <span className={styles.captain}>C</span>}
+    47 |       </div>
+    48 |       <div className={styles.playerStatus}>
+
+ ERROR(TypeScript)  Property 'isPlayed' does not exist on type 'FormationPlayer'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:49:17
+
+    47 |       </div>
+    48 |       <div className={styles.playerStatus}>
+  > 49 |         {player.isPlayed ? (
+       |                 ^^^^^^^^
+    50 |           <span className="text-green-400">{player.points} pts</span>
+    51 |         ) : (
+    52 |           <span className="text-yellow-400">Still to play</span>
+
+ ERROR(TypeScript)  Property 'points' does not exist on type 'FormationPlayer'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:50:52
+
+    48 |       <div className={styles.playerStatus}>
+    49 |         {player.isPlayed ? (
+  > 50 |           <span className="text-green-400">{player.points} pts</span>
+       |                                                    ^^^^^^
+    51 |         ) : (
+    52 |           <span className="text-yellow-400">Still to play</span>
+    53 |         )}
+
+ ERROR(TypeScript)  Type 'PlayerScore' is not assignable to type 'FormationPlayer'.
+  Types of property 'isCaptain' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:79:43
+
+    77 |           <div className={styles.row}>
+    78 |             {formation.GKP.map(player => (
+  > 79 |               <PlayerCard key={player.id} player={player} />
+       |                                           ^^^^^^
+    80 |             ))}
+    81 |           </div>
+    82 |           <div className={styles.row}>
+
+ ERROR(TypeScript)  Type 'PlayerScore' is not assignable to type 'FormationPlayer'.
+  Types of property 'isCaptain' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:84:43
+
+    82 |           <div className={styles.row}>
+    83 |             {formation.DEF.map(player => (
+  > 84 |               <PlayerCard key={player.id} player={player} />
+       |                                           ^^^^^^
+    85 |             ))}
+    86 |           </div>
+    87 |           <div className={styles.row}>
+
+ ERROR(TypeScript)  Type 'PlayerScore' is not assignable to type 'FormationPlayer'.
+  Types of property 'isCaptain' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:89:43
+
+    87 |           <div className={styles.row}>
+    88 |             {formation.MID.map(player => (
+  > 89 |               <PlayerCard key={player.id} player={player} />
+       |                                           ^^^^^^
+    90 |             ))}
+    91 |           </div>
+    92 |           <div className={styles.row}>
+
+ ERROR(TypeScript)  Type 'PlayerScore' is not assignable to type 'FormationPlayer'.
+  Types of property 'isCaptain' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/SquadView.tsx:94:43
+
+    92 |           <div className={styles.row}>
+    93 |             {formation.FWD.map(player => (
+  > 94 |               <PlayerCard key={player.id} player={player} />
+       |                                           ^^^^^^
+    95 |             ))}
+    96 |           </div>
+    97 |         </div>
+
+ ERROR(TypeScript)  'data.overallRank' is possibly 'undefined'.
+ FILE  /home/runner/FPL-Stats-Dashboard/client/src/components/TeamStats.tsx:52:37
+
+    50 |           <CardContent>
+    51 |             <div className="text-2xl font-bold">#{data?.overallRank?.toLocaleString()}</div>
+  > 52 |             <Progress value={100 - (data?.overallRank / 10000)} max={100} className="mt-2" />
+       |                                     ^^^^^^^^^^^^^^^^^
+    53 |           </CardContent>
+    54 |         </Card>
+    55 |
+
+ ERROR(TypeScript)  Property 'is_captain' does not exist on type '{ element: number; }'.
+ FILE  /home/runner/FPL-Stats-Dashboard/server/routes.ts:203:27
+
+    201 |           selected_by: player.selected_by_percent,
+    202 |           isPlayed: player.event_points > 0,
+  > 203 |           isCaptain: pick.is_captain
+        |                           ^^^^^^^^^^
+    204 |         };
+    205 |       });
+    206 |
+
+[TypeScript] Found 10 errors. Watching for file changes.

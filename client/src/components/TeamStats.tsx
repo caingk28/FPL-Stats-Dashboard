@@ -49,7 +49,7 @@ export default function TeamStats({ leagueId }: TeamStatsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">#{data?.overallRank?.toLocaleString()}</div>
-            <Progress value={100 - (data?.overallRank / 10000)} max={100} className="mt-2" />
+            <Progress value={100 - ((data?.overallRank || 0) / 10000)} max={100} className="mt-2" />
           </CardContent>
         </Card>
 

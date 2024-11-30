@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchSquad } from "../lib/api";
+import { fetchSquad, PlayerScore } from "../lib/api";
 import styles from "./SquadView.module.css";
 import { User2 } from "lucide-react";
 
@@ -8,7 +8,7 @@ interface SquadViewProps {
 }
 
 interface FormationPlayer extends PlayerScore {
-  isCaptain: boolean;
+  isCaptain?: boolean;
 }
 
 export default function SquadView({ managerId }: SquadViewProps) {

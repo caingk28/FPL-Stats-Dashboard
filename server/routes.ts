@@ -188,7 +188,12 @@ export function registerRoutes(app: Express) {
       const positions = ['GKP', 'DEF', 'MID', 'FWD'];
       const teams = playersData.teams;
 
-      const picks = picksData.picks.map((pick: { element: number }) => {
+      interface Pick {
+        element: number;
+        is_captain: boolean;
+      }
+      
+      const picks = picksData.picks.map((pick: Pick) => {
         const player = playerMap.get(pick.element) as FPLPlayer;
         return {
           id: player.id,
