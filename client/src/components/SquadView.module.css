@@ -1,15 +1,18 @@
 .pitchContainer {
   background: linear-gradient(to bottom,
-    #2a8d2a 0%,
-    #1e661e 50%,
-    #2a8d2a 100%
+    #37B24D 0%,
+    #2F9E44 50%,
+    #37B24D 100%
   );
-  border: 2px solid #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  padding: 2rem;
+  padding: 3rem 2rem;
   position: relative;
-  min-height: 600px;
+  min-height: 700px;
   margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pitchLines {

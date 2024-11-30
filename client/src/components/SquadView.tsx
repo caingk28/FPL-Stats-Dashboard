@@ -7,12 +7,8 @@ interface SquadViewProps {
   managerId: string;
 }
 
-interface FormationPlayer {
-  id: number;
-  name: string;
-  position: string;
-  points: number;
-  isPlayed: boolean;
+interface FormationPlayer extends PlayerScore {
+  isCaptain: boolean;
 }
 
 export default function SquadView({ managerId }: SquadViewProps) {
@@ -45,9 +41,12 @@ export default function SquadView({ managerId }: SquadViewProps) {
       <div className={styles.playerImage}>
         <User2 size={32} className="text-gray-400" />
       </div>
-      <div className={styles.playerName}>{player.name}</div>
+      <div className={styles.playerName}>
+        {player.name}
+        {player.isCaptain && <span className={styles.captain}>C</span>}
+      </div>
       <div className={styles.playerStatus}>
-        {player.points > 0 ? (
+        {player.isPlayed ? (
           <span className="text-green-400">{player.points} pts</span>
         ) : (
           <span className="text-yellow-400">Still to play</span>

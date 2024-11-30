@@ -150,10 +150,15 @@ export function registerRoutes(app: Express) {
   // Squad data endpoint
   app.get("/api/squad/:managerId", async (req, res) => {
     try {
-      const { managerId } = paramsSchema.parse(req.params);
-      const [picksResponse, playersResponse] = await Promise.all([
-        fetch(`${FPL_API_BASE}/entry/${managerId}/event/1/picks/`),
-        fetch(`${FPL_API_BASE}/bootstrap-static/`)
+      const managerId = req.params.managerId;
+      if (!managerId || isNaN(Number(managerId))) {
+        throw new Error('Invalid manager ID');
+      }
+
+      const [picksResponse, playersResponse, eventResponse] = await Promise.all([
+        fetch(`${FPL_API_BASE}/entry/${managerId}/event/current/picks/`),
+        fetch(`${FPL_API_BASE}/bootstrap-static/`),
+        fetch(`${FPL_API_BASE}/entry/${managerId}/`)
       ]);
       
       if (!picksResponse.ok || !playersResponse.ok) {
@@ -193,7 +198,9 @@ export function registerRoutes(app: Express) {
           points: player.event_points,
           price: player.now_cost / 10,
           form: player.form,
-          selected_by: player.selected_by_percent
+          selected_by: player.selected_by_percent,
+          isPlayed: player.event_points > 0,
+          isCaptain: pick.is_captain
         };
       });
 

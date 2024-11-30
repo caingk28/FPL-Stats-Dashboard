@@ -100,6 +100,8 @@ export interface PlayerScore {
   price: number;
   form: string;
   selected_by: string;
+  isPlayed: boolean;
+  isCaptain?: boolean;
 }
 
 export interface SquadResponse {
