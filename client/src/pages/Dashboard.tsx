@@ -37,7 +37,7 @@ export default function Dashboard() {
 
             {selectedManager && (
               <Card className="md:col-span-2 p-6 bg-white/10 backdrop-blur">
-                <SquadView managerId={selectedManager} />
+                <SquadView managerId={selectedManager.toString()} />
               </Card>
             )}
           </div>

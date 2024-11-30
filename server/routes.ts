@@ -150,25 +150,53 @@ export function registerRoutes(app: Express) {
   // Squad data endpoint
   app.get("/api/squad/:managerId", async (req, res) => {
     try {
-      const managerId = req.params.managerId;
-      if (!managerId || isNaN(Number(managerId))) {
-        throw new Error('Invalid manager ID');
+      const managerId = parseInt(req.params.managerId);
+      
+      if (isNaN(managerId) || managerId <= 0) {
+        console.error(`Invalid manager ID format: ${req.params.managerId}`);
+        return res.status(400).json({ 
+          error: "Invalid manager ID format. Please provide a valid positive number." 
+        });
       }
 
+      console.log(`Fetching squad data for manager ID: ${managerId}`);
+      
       const [picksResponse, playersResponse, eventResponse] = await Promise.all([
         fetch(`${FPL_API_BASE}/entry/${managerId}/event/current/picks/`),
         fetch(`${FPL_API_BASE}/bootstrap-static/`),
         fetch(`${FPL_API_BASE}/entry/${managerId}/`)
       ]);
       
-      if (!picksResponse.ok || !playersResponse.ok) {
-        throw new Error('Failed to fetch from FPL API');
+      if (!picksResponse.ok) {
+        console.error(`Failed to fetch picks data: ${picksResponse.status} - ${picksResponse.statusText}`);
+        throw new Error('Failed to fetch team picks');
+      }
+      
+      if (!playersResponse.ok) {
+        console.error(`Failed to fetch players data: ${playersResponse.status} - ${playersResponse.statusText}`);
+        throw new Error('Failed to fetch player data');
+      }
+
+      if (!eventResponse.ok) {
+        console.error(`Failed to fetch event data: ${eventResponse.status} - ${eventResponse.statusText}`);
+        throw new Error('Failed to fetch manager data');
       }
 
       const [picksData, playersData] = await Promise.all([
         picksResponse.json(),
         playersResponse.json()
       ]);
+
+      // Validate response data structure
+      if (!picksData?.picks || !Array.isArray(picksData.picks)) {
+        console.error('Invalid picks data structure:', picksData);
+        throw new Error('Invalid response format from FPL API');
+      }
+
+      if (!playersData?.elements || !Array.isArray(playersData.elements)) {
+        console.error('Invalid players data structure:', playersData);
+        throw new Error('Invalid response format from FPL API');
+      }
 
       // Map player IDs to their full data
       interface FPLPlayer {
