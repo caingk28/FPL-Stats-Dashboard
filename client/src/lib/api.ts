@@ -91,6 +91,7 @@ export async function fetchManagerHistory(leagueId: string): Promise<ManagerHist
   const response = await fetch(`${API_BASE}/manager-history/${leagueId}`);
   return handleApiResponse<ManagerHistoryResponse>(response, 'Failed to fetch manager history');
 }
+
 export interface PlayerScore {
   id: number;
   name: string;
@@ -101,7 +102,8 @@ export interface PlayerScore {
   form: string;
   selected_by: string;
   isPlayed: boolean;
-  isCaptain?: boolean;
+  isCaptain: boolean;
+  multiplier?: number;
 }
 
 export interface SquadResponse {

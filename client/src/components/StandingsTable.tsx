@@ -24,14 +24,16 @@ export default function StandingsTable({ leagueId, onSelectManager }: StandingsT
     queryKey: ["standings", leagueId],
     queryFn: () => fetchLeagueStandings(leagueId),
     refetchInterval: 60000, // Refresh every minute
+    onError: (err) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to fetch standings",
+      });
+    }
   });
 
   if (error) {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to fetch standings",
-    });
     return (
       <div className="p-4 text-red-400 bg-red-950/50 rounded-md">
         Failed to load standings. Please try again later.
@@ -81,7 +83,7 @@ export default function StandingsTable({ leagueId, onSelectManager }: StandingsT
             <TableRow 
               key={entry.entry}
               className="cursor-pointer hover:bg-white/5"
-              onClick={() => onSelectManager && onSelectManager(entry.entry.toString())}
+              onClick={() => onSelectManager?.(entry.entry.toString())}
             >
               <TableCell>{entry.rank}</TableCell>
               <TableCell>{entry.entry_name}</TableCell>

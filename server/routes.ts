@@ -1,162 +1,16 @@
-import type { Express } from "express";
-import { z } from "zod";
-
-interface LeagueStanding {
-  total: number;
-}
-
-interface TeamStatsResponse {
-  averagePoints: number;
-  highestScore: number;
-  totalTeams: number;
-  totalTransfers: number;
-  bestGameweekScore: number;
-  overallRank: number;
-  teamValue: number;
-}
-
-interface ManagerHistoryResponse {
-  history: Array<{
-    event: number;
-    points: number;
-    rank: number;
-  }>;
-  chips?: Array<{
-    id: number;
-    event: number;
-    playerIn: string;
-    playerOut: string;
-  }>;
-}
-const paramsSchema = z.object({
-  leagueId: z.string().regex(/^\d+$/),
-});
-
-import cors from 'cors';
+import express, { Express } from "express";
 
 const FPL_API_BASE = "https://fantasy.premierleague.com/api";
 
 export function registerRoutes(app: Express) {
-  // Enable CORS for all routes
-  app.use(cors());
-
-  // Proxy route for league standings
-  app.get("/api/leagues/:leagueId/standings", async (req, res) => {
-    try {
-      const { leagueId } = paramsSchema.parse(req.params);
-      const response = await fetch(`${FPL_API_BASE}/leagues-classic/${leagueId}/standings/`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch from FPL API');
-      }
-
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid league ID or API error" });
-    }
-  });
-
-  // Team stats endpoint
-  app.get("/api/team-stats/:leagueId", async (req, res) => {
-    try {
-      const { leagueId } = paramsSchema.parse(req.params);
-      const [leagueResponse, historyResponse] = await Promise.all([
-        fetch(`${FPL_API_BASE}/leagues-classic/${leagueId}/standings/`),
-        fetch(`${FPL_API_BASE}/entry/${leagueId}/history/`)
-      ]);
-      
-      if (!leagueResponse.ok || !historyResponse.ok) {
-        throw new Error('Failed to fetch from FPL API');
-      }
-
-      const [leagueData, historyData] = await Promise.all([
-        leagueResponse.json(),
-        historyResponse.json()
-      ]);
-
-      const standings = leagueData.standings.results;
-      const history = historyData.current;
-      
-      const totalPoints = standings.reduce((sum: number, entry: any) => sum + entry.total, 0);
-      const averagePoints = Math.round(totalPoints / standings.length);
-      const highestScore = Math.max(...standings.map((entry: any) => entry.total));
-      const bestGameweekScore = Math.max(...history.map((gw: any) => gw.points));
-      const lastGw = history[history.length - 1];
-      
-      res.json({
-        averagePoints,
-        highestScore,
-        totalTeams: standings.length,
-        totalTransfers: history.reduce((sum: number, gw: any) => sum + gw.event_transfers, 0),
-        bestGameweekScore,
-        overallRank: lastGw.overall_rank,
-        teamValue: lastGw.value / 10, // Convert to actual value
-      });
-    } catch (error) {
-      res.status(400).json({ error: "Invalid league ID or API error" });
-    }
-  });
-
-  app.get("/api/manager-history/:leagueId", async (req, res) => {
-    try {
-      const { leagueId } = paramsSchema.parse(req.params);
-      const [historyResponse, transfersResponse, picksResponse] = await Promise.all([
-        fetch(`${FPL_API_BASE}/entry/${leagueId}/history/`),
-        fetch(`${FPL_API_BASE}/entry/${leagueId}/transfers/`),
-        fetch(`${FPL_API_BASE}/entry/${leagueId}/event/1/picks/`) // We'll need to fetch each gameweek's picks for captain history
-      ]);
-      
-      if (!historyResponse.ok || !transfersResponse.ok || !picksResponse.ok) {
-        throw new Error('Failed to fetch from FPL API');
-      }
-
-      const [historyData, transfersData, picksData] = await Promise.all([
-        historyResponse.json(),
-        transfersResponse.json(),
-        picksResponse.json()
-      ]);
-      
-      // Process transfers to include points impact
-      const transfers = transfersData.map((transfer: any) => ({
-        id: transfer.id,
-        event: transfer.event,
-        playerIn: transfer.element_in_name,
-        playerOut: transfer.element_out_name,
-        pointsImpact: transfer.points_hit || 0
-      }));
-
-      // Process captain picks (simplified for now, we'd need to fetch each gameweek's picks for complete data)
-      const captains = [{
-        event: 1,
-        playerName: picksData.picks.find((pick: any) => pick.is_captain).element_name,
-        points: 0 // We'd need additional API calls to get the points
-      }];
-
-      res.json({
-        history: historyData.current,
-        chips: historyData.chips.map((chip: any) => ({
-          name: chip.name,
-          event: chip.event,
-          time: chip.time
-        })),
-        transfers,
-        captains
-      });
-    } catch (error) {
-      res.status(400).json({ error: "Invalid manager ID or API error" });
-    }
-  });
   // Squad data endpoint
-  app.get("/api/squad/:managerId", async (req, res) => {
+  app.get("/api/squad/:managerId", async ({ params }, res) => {
     try {
-      const managerId = parseInt(req.params.managerId);
+      const managerId = parseInt(params.managerId);
       
       if (isNaN(managerId) || managerId <= 0) {
-        console.error(`Invalid manager ID format: ${req.params.managerId}`);
-        return res.status(400).json({ 
-          error: "Invalid manager ID format. Please provide a valid positive number." 
-        });
+        console.error(`Invalid manager ID format: ${params.managerId}`);
+        return res.status(400).json({ error: "Invalid manager ID format. Please provide a valid positive number." });
       }
 
       console.log(`Fetching squad data for manager ID: ${managerId}`);
@@ -167,62 +21,41 @@ export function registerRoutes(app: Express) {
         fetch(`${FPL_API_BASE}/entry/${managerId}/`)
       ]);
       
-      if (!picksResponse.ok) {
-        console.error(`Failed to fetch picks data: ${picksResponse.status} - ${picksResponse.statusText}`);
-        throw new Error('Failed to fetch team picks');
-      }
-      
-      if (!playersResponse.ok) {
-        console.error(`Failed to fetch players data: ${playersResponse.status} - ${playersResponse.statusText}`);
-        throw new Error('Failed to fetch player data');
+      if (!picksResponse.ok || !playersResponse.ok || !eventResponse.ok) {
+        throw new Error('Failed to fetch data from FPL API');
       }
 
-      if (!eventResponse.ok) {
-        console.error(`Failed to fetch event data: ${eventResponse.status} - ${eventResponse.statusText}`);
-        throw new Error('Failed to fetch manager data');
-      }
-
-      const [picksData, playersData] = await Promise.all([
+      const [picksData, playersData, eventData] = await Promise.all([
         picksResponse.json(),
-        playersResponse.json()
+        playersResponse.json(),
+        eventResponse.json()
       ]);
-
-      // Validate response data structure
-      if (!picksData?.picks || !Array.isArray(picksData.picks)) {
-        console.error('Invalid picks data structure:', picksData);
-        throw new Error('Invalid response format from FPL API');
-      }
-
-      if (!playersData?.elements || !Array.isArray(playersData.elements)) {
-        console.error('Invalid players data structure:', playersData);
-        throw new Error('Invalid response format from FPL API');
-      }
 
       // Map player IDs to their full data
       interface FPLPlayer {
-        id: number;
-        web_name: string;
-        element_type: number;
-        team: number;
-        event_points: number;
-        now_cost: number;
-        form: string;
-        selected_by_percent: string;
-      }
+  id: number;
+  web_name: string;
+  element_type: number;
+  team: number;
+  event_points: number;
+  now_cost: number;
+  form: string;
+  selected_by_percent: string;
+}
 
-      const playerMap = new Map(
-        playersData.elements.map((p: FPLPlayer) => [p.id, p])
-      );
+const playerMap = new Map<number, FPLPlayer>(
+  playersData.elements.map((p: FPLPlayer) => [p.id, p])
+);
+      
       const positions = ['GKP', 'DEF', 'MID', 'FWD'];
       const teams = playersData.teams;
 
-      interface Pick {
-        element: number;
-        is_captain: boolean;
-      }
-      
-      const picks = picksData.picks.map((pick: Pick) => {
-        const player = playerMap.get(pick.element) as FPLPlayer;
+      const picks = picksData.picks.map((pick: any) => {
+        const player = playerMap.get(pick.element);
+        if (!player) {
+          throw new Error(`Player data not found for ID: ${pick.element}`);
+        }
+        
         return {
           id: player.id,
           name: player.web_name,
@@ -233,17 +66,21 @@ export function registerRoutes(app: Express) {
           form: player.form,
           selected_by: player.selected_by_percent,
           isPlayed: player.event_points > 0,
-          isCaptain: pick.is_captain
+          isCaptain: pick.is_captain,
+          multiplier: pick.multiplier || 1
         };
       });
 
-      res.json({
+      return res.json({
         picks,
         totalPoints: picksData.entry_history.points,
         bank: picksData.entry_history.bank / 10
       });
     } catch (error) {
-      res.status(400).json({ error: "Invalid manager ID or API error" });
+      console.error('Error processing squad data:', error);
+      return res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process squad data"
+      });
     }
   });
 }

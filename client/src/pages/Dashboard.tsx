@@ -30,16 +30,15 @@ export default function Dashboard() {
             <Card className="p-6 bg-white/10 backdrop-blur">
               <TeamStats leagueId={leagueId} />
             </Card>
+            {selectedManager && (
+              <Card className="md:col-span-2 p-6 bg-white/10 backdrop-blur">
+                <SquadView managerId={selectedManager} />
+              </Card>
+            )}
 
             <Card className="md:col-span-2 p-6 bg-white/10 backdrop-blur">
               <ManagerView leagueId={leagueId} />
             </Card>
-
-            {selectedManager && (
-              <Card className="md:col-span-2 p-6 bg-white/10 backdrop-blur">
-                <SquadView managerId={selectedManager.toString()} />
-              </Card>
-            )}
           </div>
         )}
       </div>
