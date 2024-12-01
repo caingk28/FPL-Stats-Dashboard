@@ -1,86 +1,186 @@
 import express, { Express } from "express";
 
-const FPL_API_BASE = "https://fantasy.premierleague.com/api";
+const FPL_API = "https://fantasy.premierleague.com/api";
 
-export function registerRoutes(app: Express) {
-  // Squad data endpoint
-  app.get("/api/squad/:managerId", async ({ params }, res) => {
-    try {
-      const managerId = parseInt(params.managerId);
-      
-      if (isNaN(managerId) || managerId <= 0) {
-        console.error(`Invalid manager ID format: ${params.managerId}`);
-        return res.status(400).json({ error: "Invalid manager ID format. Please provide a valid positive number." });
-      }
+// Helper function for FPL API requests
+async function fplFetch(url: string) {
+  console.log(`[FPL] Requesting: ${url}`);
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json'
+    }
+  });
 
-      console.log(`Fetching squad data for manager ID: ${managerId}`);
-      
-      const [picksResponse, playersResponse, eventResponse] = await Promise.all([
-        fetch(`${FPL_API_BASE}/entry/${managerId}/event/current/picks/`),
-        fetch(`${FPL_API_BASE}/bootstrap-static/`),
-        fetch(`${FPL_API_BASE}/entry/${managerId}/`)
-      ]);
-      
-      if (!picksResponse.ok || !playersResponse.ok || !eventResponse.ok) {
-        throw new Error('Failed to fetch data from FPL API');
-      }
+  if (!response.ok) {
+    console.error(`[FPL] Error ${response.status}:`, await response.text());
+    throw new Error(`FPL API request failed: ${response.status}`);
+  }
 
-      const [picksData, playersData, eventData] = await Promise.all([
-        picksResponse.json(),
-        playersResponse.json(),
-        eventResponse.json()
-      ]);
-
-      // Map player IDs to their full data
-      interface FPLPlayer {
-  id: number;
-  web_name: string;
-  element_type: number;
-  team: number;
-  event_points: number;
-  now_cost: number;
-  form: string;
-  selected_by_percent: string;
+  return response.json();
 }
 
-const playerMap = new Map<number, FPLPlayer>(
-  playersData.elements.map((p: FPLPlayer) => [p.id, p])
-);
-      
-      const positions = ['GKP', 'DEF', 'MID', 'FWD'];
-      const teams = playersData.teams;
+export function registerRoutes(app: Express) {
+  // Get manager's leagues
+  app.get("/api/manager/:managerId/leagues", async (req, res) => {
+    try {
+      const managerId = req.params.managerId;
+      console.log(`[Leagues] Fetching for manager ${managerId}`);
 
-      const picks = picksData.picks.map((pick: any) => {
-        const player = playerMap.get(pick.element);
-        if (!player) {
-          throw new Error(`Player data not found for ID: ${pick.element}`);
+      const data = await fplFetch(`${FPL_API}/entry/${managerId}`);
+      
+      if (!data.leagues?.classic) {
+        return res.json([]);
+      }
+
+      const leagues = data.leagues.classic.map((league: any) => ({
+        id: league.id,
+        name: league.name,
+        entry_rank: league.entry_rank,
+        entry_last_rank: league.entry_last_rank,
+        total_teams: league.num_teams
+      }));
+
+      console.log(`[Leagues] Found ${leagues.length} leagues`);
+      return res.json(leagues);
+
+    } catch (error) {
+      console.error('[Leagues] Error:', error);
+      return res.status(500).json({ error: "Failed to fetch leagues" });
+    }
+  });
+
+  // Get league standings
+  app.get("/api/leagues/:leagueId/standings", async (req, res) => {
+    try {
+      const leagueId = req.params.leagueId;
+      console.log(`[Standings] Fetching for league ${leagueId}`);
+
+      const data = await fplFetch(`${FPL_API}/leagues-classic/${leagueId}/standings/`);
+      
+      return res.json({
+        league: {
+          id: data.league.id,
+          name: data.league.name,
+          created: data.league.created,
+          closed: data.league.closed
+        },
+        standings: {
+          has_next: data.standings.has_next,
+          page: data.standings.page,
+          results: data.standings.results
         }
+      });
+
+    } catch (error) {
+      console.error('[Standings] Error:', error);
+      return res.status(500).json({ error: "Failed to fetch standings" });
+    }
+  });
+
+  // Get team stats
+  app.get("/api/team-stats/:managerId", async (req, res) => {
+    try {
+      const managerId = req.params.managerId;
+      console.log(`[Stats] Fetching for manager ${managerId}`);
+
+      const data = await fplFetch(`${FPL_API}/entry/${managerId}`);
+      
+      return res.json({
+        averagePoints: Math.round(data.summary_overall_points / data.current_event),
+        highestScore: data.max_points,
+        totalTeams: data.leagues?.classic?.length || 0,
+        totalTransfers: data.total_transfers,
+        bestGameweekScore: data.max_points,
+        overallRank: data.summary_overall_rank,
+        teamValue: data.last_deadline_value / 10
+      });
+
+    } catch (error) {
+      console.error('[Stats] Error:', error);
+      return res.status(500).json({ error: "Failed to fetch team stats" });
+    }
+  });
+
+  // Get manager history
+  app.get("/api/manager-history/:managerId", async (req, res) => {
+    try {
+      const managerId = req.params.managerId;
+      console.log(`[History] Fetching for manager ${managerId}`);
+
+      const data = await fplFetch(`${FPL_API}/entry/${managerId}/history/`);
+      
+      return res.json({
+        history: data.current || [],
+        chips: data.chips || [],
+        transfers: [],
+        captains: []
+      });
+
+    } catch (error) {
+      console.error('[History] Error:', error);
+      return res.status(500).json({ error: "Failed to fetch history" });
+    }
+  });
+
+  // Get squad
+  app.get("/api/squad/:managerId", async (req, res) => {
+    try {
+      const managerId = req.params.managerId;
+      console.log(`[Squad] Fetching for manager ${managerId}`);
+
+      // Get bootstrap data first
+      const bootstrap = await fplFetch(`${FPL_API}/bootstrap-static/`);
+      const currentEvent = bootstrap.events.find((e: any) => e.is_current)?.id || 1;
+
+      // Get picks for current gameweek
+      const picks = await fplFetch(`${FPL_API}/entry/${managerId}/event/${currentEvent}/picks/`);
+
+      // Map player data
+      const players = bootstrap.elements;
+      const teams = bootstrap.teams;
+
+      const mappedPicks = picks.picks.map((pick: any) => {
+        const player = players.find((p: any) => p.id === pick.element);
+        const team = teams.find((t: any) => t.id === player.team);
         
         return {
           id: player.id,
-          name: player.web_name,
-          position: positions[player.element_type - 1],
-          team: teams[player.team - 1].short_name,
-          points: player.event_points,
+          name: `${player.first_name} ${player.second_name}`,
+          position: getPosition(player.element_type),
+          team: team.short_name,
+          points: pick.points,
           price: player.now_cost / 10,
           form: player.form,
           selected_by: player.selected_by_percent,
-          isPlayed: player.event_points > 0,
+          isPlayed: pick.position <= 11,
           isCaptain: pick.is_captain,
-          multiplier: pick.multiplier || 1
+          multiplier: pick.multiplier,
+          stats: {}
         };
       });
 
       return res.json({
-        picks,
-        totalPoints: picksData.entry_history.points,
-        bank: picksData.entry_history.bank / 10
+        picks: mappedPicks,
+        totalPoints: picks.entry_history?.points || 0,
+        bank: picks.entry_history?.bank / 10 || 0,
+        event: currentEvent
       });
+
     } catch (error) {
-      console.error('Error processing squad data:', error);
-      return res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to process squad data"
-      });
+      console.error('[Squad] Error:', error);
+      return res.status(500).json({ error: "Failed to fetch squad" });
     }
   });
+}
+
+// Helper function to convert element_type to position name
+function getPosition(elementType: number): string {
+  switch (elementType) {
+    case 1: return 'GKP';
+    case 2: return 'DEF';
+    case 3: return 'MID';
+    case 4: return 'FWD';
+    default: return 'Unknown';
+  }
 }

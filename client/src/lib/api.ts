@@ -1,5 +1,13 @@
 const API_BASE = "/api";
 
+export interface League {
+  id: number;
+  name: string;
+  entry_rank: number;
+  entry_last_rank: number;
+  total_teams: number;
+}
+
 export interface StandingsEntry {
   entry: number;
   entry_name: string;
@@ -69,29 +77,6 @@ export interface ManagerHistoryResponse {
   }>;
 }
 
-async function handleApiResponse<T>(response: Response, errorMessage: string): Promise<T> {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: errorMessage }));
-    throw new Error(error.error || errorMessage);
-  }
-  return response.json();
-}
-
-export async function fetchLeagueStandings(leagueId: string): Promise<LeagueStandingsResponse> {
-  const response = await fetch(`${API_BASE}/leagues/${leagueId}/standings`);
-  return handleApiResponse<LeagueStandingsResponse>(response, 'Failed to fetch league standings');
-}
-
-export async function fetchTeamStats(leagueId: string): Promise<TeamStatsResponse> {
-  const response = await fetch(`${API_BASE}/team-stats/${leagueId}`);
-  return handleApiResponse<TeamStatsResponse>(response, 'Failed to fetch team stats');
-}
-
-export async function fetchManagerHistory(leagueId: string): Promise<ManagerHistoryResponse> {
-  const response = await fetch(`${API_BASE}/manager-history/${leagueId}`);
-  return handleApiResponse<ManagerHistoryResponse>(response, 'Failed to fetch manager history');
-}
-
 export interface PlayerScore {
   id: number;
   name: string;
@@ -104,12 +89,59 @@ export interface PlayerScore {
   isPlayed: boolean;
   isCaptain: boolean;
   multiplier?: number;
+  stats: Partial<PlayerStats>;
+}
+
+export interface PlayerStats {
+  minutes: number;
+  goals_scored: number;
+  assists: number;
+  clean_sheets: number;
+  goals_conceded: number;
+  own_goals: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  saves: number;
+  bonus: number;
+  bps: number;
+  total_points: number;
 }
 
 export interface SquadResponse {
   picks: PlayerScore[];
   totalPoints: number;
   bank: number;
+  event: number;
+}
+
+async function handleApiResponse<T>(response: Response, errorMessage: string): Promise<T> {
+  if (!response.ok) {
+    console.error(`API Error (${response.status}):`, await response.text());
+    throw new Error(errorMessage);
+  }
+  return response.json();
+}
+
+export async function fetchManagerLeagues(managerId: string): Promise<League[]> {
+  const response = await fetch(`${API_BASE}/manager/${managerId}/leagues`);
+  return handleApiResponse<League[]>(response, 'Failed to fetch manager leagues');
+}
+
+export async function fetchLeagueStandings(leagueId: string): Promise<LeagueStandingsResponse> {
+  const response = await fetch(`${API_BASE}/leagues/${leagueId}/standings`);
+  return handleApiResponse<LeagueStandingsResponse>(response, 'Failed to fetch league standings');
+}
+
+export async function fetchTeamStats(managerId: string): Promise<TeamStatsResponse> {
+  const response = await fetch(`${API_BASE}/team-stats/${managerId}`);
+  return handleApiResponse<TeamStatsResponse>(response, 'Failed to fetch team stats');
+}
+
+export async function fetchManagerHistory(managerId: string): Promise<ManagerHistoryResponse> {
+  const response = await fetch(`${API_BASE}/manager-history/${managerId}`);
+  return handleApiResponse<ManagerHistoryResponse>(response, 'Failed to fetch manager history');
 }
 
 export async function fetchSquad(managerId: string): Promise<SquadResponse> {

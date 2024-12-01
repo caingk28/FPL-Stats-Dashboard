@@ -1,96 +1,81 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchManagerHistory } from "../lib/api";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { fetchManagerHistory, type ManagerHistoryResponse } from "../lib/api";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ManagerViewProps {
-  leagueId: string;
+  managerId: string;
 }
 
-export default function ManagerView({ leagueId }: ManagerViewProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["managerHistory", leagueId],
-    queryFn: () => fetchManagerHistory(leagueId),
-    refetchInterval: 60000,
+export default function ManagerView({ managerId }: ManagerViewProps) {
+  const { data, isLoading, error } = useQuery<ManagerHistoryResponse>({
+    queryKey: ["manager-history", managerId],
+    queryFn: () => fetchManagerHistory(managerId),
+    enabled: !!managerId,
   });
 
-  if (isLoading) {
+  if (error) {
     return (
-      <Card className="bg-white/10">
-        <CardHeader>
-          <CardTitle>Manager Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="animate-pulse bg-white/20 h-8 w-48 rounded" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-white/20 h-32 rounded" />
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">Manager Statistics</h2>
+        <div className="text-red-400 bg-red-950/50 rounded-md p-4">
+          Failed to load manager history. Please try again later.
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || !data) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">Manager Statistics</h2>
+        <Skeleton className="h-[300px] bg-white/20" />
+      </div>
     );
   }
 
   return (
-    <Card className="bg-white/10">
-      <CardHeader>
-        <CardTitle>Manager Statistics</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="history">
-          <TabsList>
-            <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="transfers">Transfers</TabsTrigger>
-          </TabsList>
-          <TabsContent value="history" key="history">
-            {data?.history?.length ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {data.history.map((week) => (
-                  <Card key={week.event} className="bg-white/5">
-                    <CardHeader>
-                      <CardTitle className="text-sm">Gameweek {week.event}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p>Points: {week.points}</p>
-                      <p>Rank: {week.rank}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Manager Statistics</h2>
+      <Tabs defaultValue="history">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="transfers">Transfers</TabsTrigger>
+        </TabsList>
+        <TabsContent value="history" className="space-y-4">
+          {data.history.slice(-5).map((entry) => (
+            <Card key={entry.event} className="p-4 bg-white/10">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-white/60">Gameweek {entry.event}</p>
+                  <p className="text-lg font-bold">{entry.points} pts</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-white/60">Overall Rank</p>
+                  <p className="text-lg font-bold">#{entry.overall_rank.toLocaleString()}</p>
+                </div>
               </div>
-            ) : (
-              <div className="p-4 text-yellow-400 bg-yellow-950/50 rounded-md">
-                No gameweek history available for this manager.
+            </Card>
+          ))}
+        </TabsContent>
+        <TabsContent value="transfers" className="space-y-4">
+          {data.chips.map((chip) => (
+            <Card key={chip.time} className="p-4 bg-white/10">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-white/60">Chip Used</p>
+                  <p className="text-lg font-bold">{chip.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-white/60">Gameweek</p>
+                  <p className="text-lg font-bold">{chip.event}</p>
+                </div>
               </div>
-            )}
-          </TabsContent>
-          <TabsContent value="transfers" key="transfers">
-            {data?.chips?.length ? (
-              <div className="grid grid-cols-1 gap-4">
-                {data.chips.map((chip, index) => (
-                  <Card key={`${chip.name}-${chip.event}-${index}`} className="bg-white/5">
-                    <CardContent className="py-4">
-                      <p>{chip.name}</p>
-                      <p className="text-sm text-gray-400">GW {chip.event} • {chip.time}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 text-yellow-400 bg-yellow-950/50 rounded-md">
-                No transfer history available for this manager.
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

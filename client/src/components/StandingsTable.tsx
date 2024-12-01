@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchLeagueStandings } from "../lib/api";
+import { fetchLeagueStandings, type LeagueStandingsResponse } from "../lib/api";
 import {
   Table,
   TableBody,
@@ -9,9 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { useToast } from "@/hooks/use-toast";
-import { LeagueStandingsResponse, StandingsEntry } from "../lib/api";
+import { useEffect } from "react";
 
 interface StandingsTableProps {
   leagueId: string;
@@ -24,14 +23,18 @@ export default function StandingsTable({ leagueId, onSelectManager }: StandingsT
     queryKey: ["standings", leagueId],
     queryFn: () => fetchLeagueStandings(leagueId),
     refetchInterval: 60000, // Refresh every minute
-    onError: (err) => {
+  });
+
+  useEffect(() => {
+    if (error) {
+      const message = error instanceof Error ? error.message : "Failed to fetch standings";
       toast({
         variant: "destructive",
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to fetch standings",
+        description: message,
       });
     }
-  });
+  }, [error]);
 
   if (error) {
     return (

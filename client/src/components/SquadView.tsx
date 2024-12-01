@@ -20,11 +20,17 @@ interface Formation {
 }
 
 function PlayerCard({ player }: { player: FormationPlayer }) {
+  const hasPlayed = player.stats?.minutes && player.stats.minutes > 0;
+  const goalPoints = (player.stats?.goals_scored || 0) * (player.position === 'MID' ? 5 : player.position === 'FWD' ? 4 : 6);
+  const assistPoints = (player.stats?.assists || 0) * 3;
+  const cleanSheetPoints = (player.stats?.clean_sheets || 0) * (player.position === 'DEF' || player.position === 'GKP' ? 4 : player.position === 'MID' ? 1 : 0);
+  const bonusPoints = player.stats?.bonus || 0;
+
   return (
-    <div className="flex flex-col items-center gap-1 p-2 text-center">
+    <div className="flex flex-col items-center gap-1 p-2 text-center group relative">
       <div className="relative">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center 
-          ${player.isPlayed ? 'bg-green-600' : 'bg-gray-600'} 
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
+          ${hasPlayed ? 'bg-green-600' : 'bg-gray-600'} 
           ${player.isCaptain ? 'ring-2 ring-yellow-400' : ''}`}>
           <span className="text-xs font-bold">{player.position}</span>
         </div>
@@ -34,11 +40,23 @@ function PlayerCard({ player }: { player: FormationPlayer }) {
         {player.isCaptain && <span className="ml-1 text-yellow-400">(C)</span>}
       </div>
       <div className="text-xs">
-        {player.isPlayed ? (
+        {hasPlayed ? (
           <span className="text-green-400">{player.points} pts</span>
         ) : (
-          <span className="text-yellow-400">Still to play</span>
+          <span className="text-yellow-400">Yet to play</span>
         )}
+      </div>
+      
+      {/* Hover stats tooltip */}
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-black/90 text-white text-xs rounded p-2 z-10 w-48">
+        <div className="grid grid-cols-2 gap-1">
+          {player.stats?.minutes && <div>Minutes: {player.stats.minutes}</div>}
+          {player.stats?.goals_scored > 0 && <div>Goals: {player.stats.goals_scored} ({goalPoints}pts)</div>}
+          {player.stats?.assists > 0 && <div>Assists: {player.stats.assists} ({assistPoints}pts)</div>}
+          {player.stats?.clean_sheets > 0 && <div>Clean Sheet: {cleanSheetPoints}pts</div>}
+          {bonusPoints > 0 && <div>Bonus: {bonusPoints}pts</div>}
+          {player.stats?.bps > 0 && <div>BPS: {player.stats.bps}</div>}
+        </div>
       </div>
     </div>
   );
